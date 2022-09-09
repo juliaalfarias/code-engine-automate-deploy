@@ -1,0 +1,30 @@
+name: code-engine-automate-deploy
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test_job:
+    name: test job
+    runs-on: ubuntu-latest
+    env:
+      IBM_CLOUD_API_KEY: ${{ secrets.IBM_CLOUD_API_KEY }}
+      IBM_CLOUD_REGION: ${{ secrets.IBM_CLOUD_REGION }}
+      IBM_CLOUD_RESOURCE_GROUP: ${{ secrets.IBM_CLOUD_RESOURCE_GROUP }}
+      CE_PROJNAME: ${{ secrets.CE_PROJNAME }}
+      CE_APPNAME: ${{ secrets.CE_APPNAME }}
+    steps:
+      - name: Install IBM Cloud CLI
+        run: |
+          curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+          ibmcloud --version
+          ibmcloud config --check-version=false
+          ibmcloud plugin install -f code-engine
+          ibmcloud plugin install -f container-registry
+
+      - name: Create new Code Engine revision
+        run: |
+          ibmcloud login --apikey "${IBM_CLOUD_API_KEY}" -r "${IBM_CLOUD_REGION}" -g "${IBM_CLOUD_RESOURCE_GROUP}"
+          ibmcloud ce project select -n "${CE_PROJNAME}"
+          ibmcloud ce app update -n "${CE_APPNAME}"
